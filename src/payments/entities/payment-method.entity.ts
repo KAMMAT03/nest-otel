@@ -1,22 +1,19 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity()
-export class Product {
+export class PaymentMethod {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @Column('decimal', { precision: 10, scale: 2 })
-  price: number;
+  fee: number;
 
   @Column({ nullable: true })
   description: string;
 
-  @Column({ default: 0 })
-  stock: number;
-
-  @Column({ nullable: true })
-  categoryId: number;
+  @Column({ default: true })
+  isActive: boolean;
 }
