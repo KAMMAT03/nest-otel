@@ -1,7 +1,9 @@
 import { Controller, Get, Post, Param, Query, Body, HttpCode } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { InitSampleDataDto } from './dto/init-sample-data.dto';
+import { FilePath } from 'src/decorators/file-path.decorator';
 
+@FilePath(__filename)
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}

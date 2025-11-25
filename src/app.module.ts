@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { LatencyModule } from './latency/latency.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { OpenTelemetryInterceptor } from './interceptors/otel.interceptor';
@@ -17,7 +16,6 @@ import { PaymentsModule } from './payments/payments.module';
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
     }),
-    LatencyModule,
     OrdersModule,
     PaymentsModule,
   ],

@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Param, Body, Query, HttpCode } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
+import { FilePath } from 'src/decorators/file-path.decorator';
 
+@FilePath(__filename)
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
