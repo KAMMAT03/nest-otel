@@ -4,6 +4,6 @@ import { LatencyController } from './latency.controller';
 
 @Module({
   providers: [LatencyService],
-  controllers: [LatencyController]
+  controllers: [LatencyController],
 })
 export class LatencyModule {}

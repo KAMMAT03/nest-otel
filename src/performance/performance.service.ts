@@ -28,7 +28,7 @@ export class PerformanceService {
   // Seed database with test data
   async seedDatabase(usersCount: number = 100, postsPerUser: number = 20) {
     const users: User[] = [];
-    
+
     for (let i = 0; i < usersCount; i++) {
       const user = this.userRepo.create({
         name: `User ${i}`,
@@ -56,14 +56,14 @@ export class PerformanceService {
   // Expected OTEL: Multiple spans with db.system=sqlite, high span count, total duration > 500ms
   async getUsersWithPostsN1() {
     const users: User[] = await this.userRepo.find({ take: 50 });
-    
+
     // BAD: Separate query for each user (N+1 problem)
     const usersWithPosts: any = [];
     for (const user of users) {
       const posts = await this.postRepo.find({ where: { userId: user.id } });
       usersWithPosts.push({ ...user, posts });
     }
-    
+
     return { count: usersWithPosts.length, data: usersWithPosts };
   }
 
@@ -81,10 +81,10 @@ export class PerformanceService {
     // Continuously growing array - never cleared
     const data = new Array(100000).fill('memory leak data ' + Date.now());
     this.leakyArray.push(...data);
-    
-    return { 
+
+    return {
       leakedItems: this.leakyArray.length,
-      memoryUsage: process.memoryUsage()
+      memoryUsage: process.memoryUsage(),
     };
   }
 
@@ -104,9 +104,9 @@ export class PerformanceService {
   synchronousFileRead() {
     // BAD: Synchronous blocking call - will block event loop
     const data = fs.readFileSync(this.largeFilePath, 'utf-8');
-    return { 
+    return {
       bytesRead: data.length,
-      readType: 'synchronous'
+      readType: 'synchronous',
     };
   }
 
@@ -118,11 +118,11 @@ export class PerformanceService {
     for (let i = 0; i < 10000000; i++) {
       result += Math.sqrt(i * parseInt(id));
     }
-    
-    return { 
+
+    return {
       result,
       id,
-      cached: false
+      cached: false,
     };
   }
 
@@ -130,7 +130,7 @@ export class PerformanceService {
   // Expected OTEL: Very high duration for size > 100, CPU intensive
   inefficientNestedLoops(size: number) {
     const result: number[] = [];
-    
+
     // BAD: Triple nested loop - O(n³) complexity
     for (let i = 0; i < size; i++) {
       for (let j = 0; j < size; j++) {
@@ -139,11 +139,11 @@ export class PerformanceService {
         }
       }
     }
-    
-    return { 
+
+    return {
       computed: result.length,
       size,
-      complexity: 'O(n³)'
+      complexity: 'O(n³)',
     };
   }
 

@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Param, Body, Query, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Body,
+  Query,
+  HttpCode,
+} from '@nestjs/common';
 import { ErrorsService } from './errors.service';
 
 @Controller('errors')

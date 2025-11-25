@@ -18,16 +18,16 @@ export class OpenTelemetryInterceptor implements NestInterceptor {
     const tracer = trace.getTracer('nestjs-app');
     const handler = context.getHandler();
     const controller = context.getClass();
-    
+
     const handlerName = handler.name;
     const controllerName = controller.name;
-    
+
     // Get file path from metadata (keep full path)
     const filePath = this.reflector.get<string>(FILE_PATH_KEY, controller);
     const fileName = filePath || controllerName.toLowerCase() + '.ts';
-    
+
     const spanName = `${controllerName}.${handlerName}`;
-    
+
     return tracer.startActiveSpan(spanName, (span) => {
       span.setAttributes({
         'code.function': handlerName,

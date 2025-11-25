@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Param, Query, Body, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  Body,
+  HttpCode,
+} from '@nestjs/common';
 import { PerformanceService } from './performance.service';
 import { CreateDataDto } from './dto/create-data.dto';
 
@@ -12,7 +20,7 @@ export class PerformanceController {
   async seedDatabase(@Body() dto: CreateDataDto) {
     return this.performanceService.seedDatabase(
       dto.usersCount || 100,
-      dto.postsPerUser || 20
+      dto.postsPerUser || 20,
     );
   }
 

@@ -14,12 +14,12 @@ export class LoggingInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const handler = context.getHandler();
     const controller = context.getClass();
-    
+
     const handlerName = handler.name;
     const controllerName = controller.name;
-    
+
     const functionName = `${controllerName}.${handlerName}`;
-    
+
     this.logger.log(`Entering function ${functionName}`);
 
     return next.handle();

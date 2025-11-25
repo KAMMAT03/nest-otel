@@ -8,6 +8,6 @@ import { Post } from 'src/performance/entities/post.entity';
 @Module({
   imports: [TypeOrmModule.forFeature([User, Post])],
   controllers: [PerformanceController],
-  providers: [PerformanceService]
+  providers: [PerformanceService],
 })
 export class PerformanceModule {}

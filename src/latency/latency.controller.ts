@@ -5,9 +5,7 @@ import { FilePath } from 'src/decorators/file-path.decorator';
 @Controller('latency')
 @FilePath(__filename)
 export class LatencyController {
-  constructor (
-    private readonly latencyService: LatencyService
-  ) {}
+  constructor(private readonly latencyService: LatencyService) {}
 
   @Get('/fib/:n')
   async fibonacci(@Param('n') fibNumber: number) {
