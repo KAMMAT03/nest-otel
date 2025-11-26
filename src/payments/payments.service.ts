@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaymentMethod } from './entities/payment-method.entity';
@@ -100,9 +100,39 @@ export class PaymentsService {
    * Register a new payment method
    */
   async registerPaymentMethod(methodData: { name: string; fee: number }) {
-    const method = this.paymentMethodRepo.create(methodData);
-    
-    return await this.paymentMethodRepo.save(method);
+    if (!methodData || !methodData.name || methodData.fee === undefined || methodData.fee === null) {
+      throw new BadRequestException('Payment method name and fee are required');
+    }
+
+    if (typeof methodData.name !== 'string' || methodData.name.trim().length === 0) {
+      throw new BadRequestException('Payment method name must be a non-empty string');
+    }
+
+    if (typeof methodData.fee !== 'number' || methodData.fee < 0) {
+      throw new BadRequestException('Payment method fee must be a non-negative number');
+    }
+
+    try {
+      const existing = await this.paymentMethodRepo.findOne({
+        where: { name: methodData.name.trim() }
+      });
+
+      if (existing) {
+        throw new ConflictException(`Payment method with name '${methodData.name}' already exists`);
+      }
+
+      const method = this.paymentMethodRepo.create({
+        name: methodData.name.trim(),
+        fee: methodData.fee
+      });
+      
+      return await this.paymentMethodRepo.save(method);
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof ConflictException) {
+        throw error;
+      }
+      throw new BadRequestException(`Failed to register payment method: ${error.message}`);
+    }
   }
 
   /**
