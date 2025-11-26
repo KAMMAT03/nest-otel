@@ -10,6 +10,7 @@ import * as path from 'path';
 export class OrdersService {
   private sessionTracker: any = [];
   private reportFilePath = path.join(process.cwd(), 'large-file.txt');
+  private shippingCostCache: Map<number, number> = new Map();
 
   constructor(
     @InjectRepository(Customer) private customerRepo: Repository<Customer>,
@@ -75,7 +76,15 @@ export class OrdersService {
    */
   calculateShippingCost(zoneId: number): number {
     if (zoneId <= 1) return zoneId;
-    return this.calculateShippingCost(zoneId - 1) + this.calculateShippingCost(zoneId - 2);
+    
+    if (this.shippingCostCache.has(zoneId)) {
+      return this.shippingCostCache.get(zoneId)!;
+    }
+    
+    const cost = this.calculateShippingCost(zoneId - 1) + this.calculateShippingCost(zoneId - 2);
+    this.shippingCostCache.set(zoneId, cost);
+    
+    return cost;
   }
 
   /**
