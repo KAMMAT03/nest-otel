@@ -19,8 +19,13 @@ const certsPath = process.env.CERTS_PATH || '/home/kmatuszewski/studia/inz/proje
 const rootCert = fs.readFileSync(path.join(certsPath, 'ca/ca.crt'));
 
 // For mTLS (optional - comment out if not using client certificates)
-const clientCert = fs.readFileSync(path.join(certsPath, 'client/nestjs-client.crt'));
-const clientKey = fs.readFileSync(path.join(certsPath, 'client/nestjs-client.key'));
+const clientCertPath = process.env.CLIENT_CERT_PATH;
+const clientKeyPath = process.env.CLIENT_KEY_PATH;
+if (!clientCertPath || !clientKeyPath) {
+  throw new Error('CLIENT_CERT_PATH and CLIENT_KEY_PATH environment variables must be set for mTLS.');
+}
+const clientCert = fs.readFileSync(clientCertPath);
+const clientKey = fs.readFileSync(clientKeyPath);
 
 // Create TLS credentials
 // Option 1: TLS only (server verification)
