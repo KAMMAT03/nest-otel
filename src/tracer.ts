@@ -14,7 +14,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Load TLS certificates
-const certsPath = process.env.CERTS_PATH || '/home/kmatuszewski/studia/inz/projekt/certs';
+const certsPath = process.env.CERTS_PATH || './certs';
 
 const rootCert = fs.readFileSync(path.join(certsPath, 'ca/ca.crt'));
 
