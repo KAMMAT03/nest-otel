@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaymentMethod } from './entities/payment-method.entity';
@@ -100,6 +100,14 @@ export class PaymentsService {
    * Register a new payment method
    */
   async registerPaymentMethod(methodData: { name: string; fee: number }) {
+    const existing = await this.paymentMethodRepo.findOne({
+      where: { name: methodData.name }
+    });
+
+    if (existing) {
+      throw new ConflictException(`Payment method with name '${methodData.name}' already exists`);
+    }
+
     const method = this.paymentMethodRepo.create(methodData);
     
     return await this.paymentMethodRepo.save(method);
