@@ -59,15 +59,19 @@ export class OrdersService {
    * Retrieve customer dashboard with order history
    */
   async getCustomerDashboard(customerId: string) {
-    const customers: Customer[] = await this.customerRepo.find({ take: 50 });
+    const customer = await this.customerRepo.findOne({
+      where: { id: parseInt(customerId) },
+      relations: ['orders'],
+    });
     
-    const customersWithOrders: any = [];
-    for (const customer of customers) {
-      const orders = await this.orderRepo.find({ where: { customerId: customer.id } });
-      customersWithOrders.push({ ...customer, orders });
+    if (!customer) {
+      return { count: 0, data: [] };
     }
     
-    return { count: customersWithOrders.length, data: customersWithOrders };
+    return { 
+      count: 1, 
+      data: [customer]
+    };
   }
 
   /**
