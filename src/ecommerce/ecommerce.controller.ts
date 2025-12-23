@@ -1,6 +1,8 @@
 import { Controller, Get, Post as PostMethod, Body, Query, Param } from '@nestjs/common';
 import { ECommerceService } from './ecommerce.service';
+import { FilePath } from 'src/decorators/file-path.decorator';
 
+@FilePath(__filename)
 @Controller('api')
 export class ECommerceController {
   constructor(
