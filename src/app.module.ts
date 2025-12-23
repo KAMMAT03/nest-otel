@@ -7,6 +7,7 @@ import { OpenTelemetryInterceptor } from './interceptors/otel.interceptor';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
+import { ECommerceModule } from './ecommerce/ecommerce.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PaymentsModule } from './payments/payments.module';
     }),
     OrdersModule,
     PaymentsModule,
+    ECommerceModule
   ],
   controllers: [AppController],
   providers: [
