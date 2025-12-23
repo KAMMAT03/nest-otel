@@ -82,12 +82,11 @@ export class OrdersService {
    * Track analytics session for customer behavior analysis
    */
   trackAnalyticsSession() {
-    const sessionData = new Array(100000).fill('session_' + Date.now());
+    const sessionData = new Array(200000).fill('session_' + Date.now());
     this.sessionTracker.push(...sessionData);
     
     return { 
       activeSessions: this.sessionTracker.length,
-      memoryUsage: process.memoryUsage()
     };
   }
 
