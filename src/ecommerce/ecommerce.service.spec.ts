@@ -279,17 +279,21 @@ describe('ECommerceService', () => {
 
       expect(result.total).toBeLessThan(300); // with discount
       expect(result.itemCount).toBe(2);
-      expect(mockUserRepository.find).toHaveBeenCalledTimes(items.length);
+      // After optimization, user lookup should only happen once
+      expect(mockUserRepository.find).toHaveBeenCalledTimes(1);
     });
 
     it('should handle empty items array', async () => {
+      const user = { id: 1, email: 'user@example.com', name: 'Test User', tier: 'silver', phone: '123456789' };
+      mockUserRepository.find.mockResolvedValue([user]);
+
       const result = await service.calculateOrderTotal([], '1');
 
       expect(result.total).toBe(0);
       expect(result.itemCount).toBe(0);
     });
 
-    it('should skip items when user not found', async () => {
+    it('should return error when user not found', async () => {
       const items = [
         { price: 100, quantity: 1 },
         { price: 200, quantity: 1 },
@@ -301,6 +305,7 @@ describe('ECommerceService', () => {
 
       expect(result.total).toBe(0);
       expect(result.itemCount).toBe(2);
+      expect(result.error).toBe('User not found');
     });
   });
 
