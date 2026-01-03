@@ -250,21 +250,22 @@ export class ECommerceService {
 
   // ==========================================
   // 3. RC - Powtarzane query dla tego samego użytkownika
+  // FIXED: Query user once before loop, cache discount
   // ==========================================
   async calculateOrderTotal(items: any[], userId: string): Promise<any> {
-    let total = 0;
+    // Query user once before processing items
+    const allUsers = await this.userRepository.find();
+    const user = allUsers.find(u => u.id === parseInt(userId));
     
+    if (!user) {
+      return { total: 0, itemCount: items.length };
+    }
+
+    // Calculate discount once and cache it
+    const discount = this.calculateDiscount(user.tier || 'bronze');
+    
+    let total = 0;
     for (const item of items) {
-      // Dla KAŻDEGO produktu wykonuje osobne query (ładuje wszystkich użytkowników)
-      const allUsers = await this.userRepository.find();
-      const user = allUsers.find(u => u.id === parseInt(userId));
-      
-      if (!user) continue;
-
-      // Dla KAŻDEGO produktu ponownie oblicza discount
-      const userForDiscount = allUsers.find(u => u.id === parseInt(userId));
-      const discount = this.calculateDiscount(userForDiscount?.tier || 'bronze');
-
       total += item.price * (1 - discount);
     }
     
