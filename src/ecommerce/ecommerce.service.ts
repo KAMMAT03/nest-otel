@@ -424,48 +424,27 @@ export class ECommerceService {
   }
 
   // ==========================================
-  // 8. RDP - Nadmiarowa walidacja
+  // 8. RDP - Optimized validation with early exit and targeted queries
   // ==========================================
   async validateRegistration(formData: any): Promise<any> {
     const errors: any = {};
     
-    // Ładuje WSZYSTKICH użytkowników do sprawdzenia email
-    const allUsersForEmail = await this.userRepository.find();
-    const emailExists = allUsersForEmail.find(u => u.email === formData.email);
-    if (emailExists) {
-      errors.email = 'Email already exists';
-    }
-    
+    // Validate format first (no DB queries needed)
     if (!this.isValidEmail(formData.email)) {
       errors.email = 'Invalid email format';
     }
     
-    // NADAL waliduje hasło nawet jeśli email jest błędny
     if (!this.isValidPassword(formData.password)) {
       errors.password = 'Weak password';
-    }
-    
-    // Ładuje WSZYSTKICH użytkowników PONOWNIE do sprawdzenia telefonu
-    const allUsersForPhone = await this.userRepository.find();
-    const phoneExists = allUsersForPhone.find(u => u.phone === formData.phone);
-    if (phoneExists) {
-      errors.phone = 'Phone already exists';
     }
     
     if (!this.isValidPhone(formData.phone)) {
       errors.phone = 'Invalid phone';
     }
     
-    // Waliduje adres nawet jeśli email i hasło są błędne
     if (!this.isValidAddress(formData.address)) {
       errors.address = 'Invalid address';
     }
-    
-    // Agregacja na wszystkich użytkownikach
-    const allUsersForZip = await this.userRepository.find();
-    const zipCodeCount = allUsersForZip.filter(u => 
-      u.name.includes(formData.zipCode)
-    ).length;
     
     if (!this.isValidZipCode(formData.zipCode)) {
       errors.zipCode = 'Invalid zip code';
@@ -473,6 +452,31 @@ export class ECommerceService {
     
     if (!this.isValidCity(formData.city)) {
       errors.city = 'Invalid city';
+    }
+    
+    // Early exit if format validation failed
+    if (Object.keys(errors).length > 0) {
+      return {
+        valid: false,
+        errors,
+      };
+    }
+    
+    // Only check uniqueness if format is valid - use targeted queries
+    const existingUserByEmail = await this.userRepository.findOne({
+      where: { email: formData.email },
+    });
+    
+    if (existingUserByEmail) {
+      errors.email = 'Email already exists';
+    }
+    
+    const existingUserByPhone = await this.userRepository.findOne({
+      where: { phone: formData.phone },
+    });
+    
+    if (existingUserByPhone) {
+      errors.phone = 'Phone already exists';
     }
     
     return {
