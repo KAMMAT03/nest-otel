@@ -178,13 +178,10 @@ export class ECommerceService {
   }
 
   // ==========================================
-  // 1. IDS - Brak indeksu na email
-  // Query scan całej tabeli users (100,000 rekordów)
+  // 1. IDS - Fixed: Use database query instead of loading all users
   // ==========================================
   async findUserByEmail(email: string): Promise<User | undefined> {
-    // Używa find() zamiast findOne() - ładuje WSZYSTKICH użytkowników do pamięci
-    const allUsers = await this.userRepository.find();
-    return allUsers.find(u => u.email === email);
+    return this.userRepository.findOne({ where: { email } });
   }
 
   // ==========================================
