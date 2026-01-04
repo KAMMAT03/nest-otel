@@ -272,30 +272,21 @@ export class ECommerceService {
   }
 
   // ==========================================
-  // 4. GIC - In-memory bubble sort
-  // Ładuje wszystkie produkty do pamięci i sortuje O(n²)
+  // 4. GIC - Database-level sorting with limit
+  // Uses ORDER BY at database level for optimal performance
   // ==========================================
   async sortProducts(limit: number = 10000): Promise<any> {
-    // Ładuje WSZYSTKIE produkty bez limitu
-    const products = await this.productRepository.find();
+    const effectiveLimit = Math.min(Math.max(limit, 1), 10000);
     
-    // Bubble sort - O(n²)
-    const n = Math.min(products.length, limit);
-    const productsToSort = products.slice(0, n);
-    
-    for (let i = 0; i < n - 1; i++) {
-      for (let j = 0; j < n - i - 1; j++) {
-        if (productsToSort[j].price > productsToSort[j + 1].price) {
-          const temp = productsToSort[j];
-          productsToSort[j] = productsToSort[j + 1];
-          productsToSort[j + 1] = temp;
-        }
-      }
-    }
+    const products = await this.productRepository
+      .createQueryBuilder('product')
+      .orderBy('product.price', 'ASC')
+      .limit(effectiveLimit)
+      .getMany();
     
     return {
-      count: productsToSort.length,
-      products: productsToSort.slice(0, 20),
+      count: products.length,
+      products: products.slice(0, 20),
     };
   }
 
