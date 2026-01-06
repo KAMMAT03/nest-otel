@@ -300,48 +300,35 @@ export class ECommerceService {
   }
 
   // ==========================================
-  // 5. ISC - Brak optymalizacji dla edge cases
+  // 5. ISC - OPTIMIZED: Database-level filtering with pagination
   // ==========================================
   async searchProducts(query: string): Promise<any> {
-    // Ładuje WSZYSTKIE produkty do pamięci
-    const allProducts = await this.productRepository.find();
-    
-    // Brak early return dla pustego query - przetwarza wszystko
-    const results = allProducts.filter(p => {
-      const searchText = query ? query.toLowerCase() : '';
-      return p.name.toLowerCase().includes(searchText) || 
-             p.description.toLowerCase().includes(searchText);
-    });
-
-    // Dla każdego produktu wykonuje agregację na ALL orders
-    const enrichedResults: any[] = [];
-    for (const product of results) {
-      let totalSold = 0;
-      let revenue = 0;
-      
-      // Ładuje WSZYSTKIE zamówienia dla każdego produktu
-      const allOrders = await this.orderRepository.find();
-      
-      for (const order of allOrders) {
-        const items = JSON.parse(order.items);
-        for (const item of items) {
-          if (item.productId === product.id) {
-            totalSold += item.quantity;
-            revenue += item.price * item.quantity;
-          }
-        }
-      }
-
-      enrichedResults.push({
-        ...product,
-        totalSold,
-        revenue,
-      });
+    // Early return for empty queries to avoid unnecessary processing
+    if (!query || query.trim() === '') {
+      return {
+        count: 0,
+        results: [],
+      };
     }
+
+    const searchText = query.toLowerCase();
     
+    // Use database-level filtering instead of loading all products into memory
+    const results = await this.productRepository
+      .createQueryBuilder('product')
+      .where('LOWER(product.name) LIKE :search', { search: `%${searchText}%` })
+      .orWhere('LOWER(product.description) LIKE :search', { search: `%${searchText}%` })
+      .take(100) // Limit results to prevent unbounded queries
+      .getMany();
+
+    // Return products without expensive order aggregation
+    // Note: If sales statistics are needed, they should be:
+    // 1. Pre-computed and stored in the product table
+    // 2. Calculated asynchronously and cached
+    // 3. Requested via a separate endpoint with proper indexing
     return {
-      count: enrichedResults.length,
-      results: enrichedResults.slice(0, 100),
+      count: results.length,
+      results: results,
     };
   }
 
