@@ -10,7 +10,7 @@ import { Room } from './entities/room.entity';
 
 @Injectable()
 export class ECommerceService {
-  private globalLock: boolean = false;
+  private roomLocks: Map<string, boolean> = new Map();
 
   constructor(
     @InjectRepository(User)
@@ -188,21 +188,22 @@ export class ECommerceService {
   }
 
   // ==========================================
-  // 2. IS - Globalna blokada dla wszystkich pokoi
+  // 2. IS - Room-specific locking instead of global lock
+  // FIXED: Use per-room locks and optimized queries
   // ==========================================
   async bookRoom(roomId: string, userId: string): Promise<any> {
-    while (this.globalLock) {
+    // Per-room lock instead of global lock
+    while (this.roomLocks.get(roomId)) {
       await new Promise(resolve => setImmediate(resolve));
     }
     
-    this.globalLock = true;
+    this.roomLocks.set(roomId, true);
     
     try {
-      // Query bez indeksu - scan całej tabeli
-      const room = await this.roomRepository
-        .createQueryBuilder('room')
-        .where('room.id = :roomId', { roomId })
-        .getOne();
+      // Direct query for specific room using findOne
+      const room = await this.roomRepository.findOne({
+        where: { id: roomId }
+      });
 
       if (!room) {
         throw new Error('Room not found');
@@ -212,21 +213,22 @@ export class ECommerceService {
         throw new Error('Room not available');
       }
 
-      // Ładuje WSZYSTKICH użytkowników do pamięci
-      const allUsers = await this.userRepository.find();
-      const user = allUsers.find(u => u.id === parseInt(userId));
+      // Direct query for specific user by ID
+      const user = await this.userRepository.findOne({
+        where: { id: parseInt(userId) }
+      });
       
       if (!user) {
         throw new Error('User not found');
       }
 
-      // Sprawdza wszystkie rezerwacje użytkownika (scan całej tabeli)
-      const allRooms = await this.roomRepository.find();
-      const userBookings = allRooms.filter(r => r.bookedBy === userId);
+      // Optimized query: count user's bookings directly in database
+      const userBookingsCount = await this.roomRepository.count({
+        where: { bookedBy: userId }
+      });
 
-      // Kolejny scan dla obliczenia rabatu
-      const userForDiscount = allUsers.find(u => u.id === parseInt(userId));
-      const discount = this.calculateDiscount(userForDiscount?.tier || 'bronze');
+      // Calculate discount once using the already-fetched user
+      const discount = this.calculateDiscount(user.tier);
 
       room.available = false;
       room.bookedBy = userId;
@@ -236,10 +238,10 @@ export class ECommerceService {
         success: true,
         room,
         discount,
-        previousBookings: userBookings.length,
+        previousBookings: userBookingsCount,
       };
     } finally {
-      this.globalLock = false;
+      this.roomLocks.delete(roomId);
     }
   }
 
