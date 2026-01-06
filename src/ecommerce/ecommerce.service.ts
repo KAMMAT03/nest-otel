@@ -392,30 +392,34 @@ export class ECommerceService {
 
   // ==========================================
   // 7. II - Wielokrotne ładowanie tych samych danych
+  // FIXED: Optimized to use single query with database-level filtering
   // ==========================================
   async processOrders(): Promise<any> {
-    // Pierwsze ładowanie: wszystkie zamówienia
-    const allOrders1 = await this.orderRepository.find();
-    const activeOrders = allOrders1.filter(o => o.status === 'active');
+    // Single optimized query with WHERE clause to filter at database level
+    const highValueOrders = await this.orderRepository
+      .createQueryBuilder('order')
+      .where('order.status = :status', { status: 'active' })
+      .andWhere('order.total > :minTotal', { minTotal: 1000 })
+      .getMany();
     
-    // Drugie ładowanie: te same zamówienia ponownie
-    const allOrders2 = await this.orderRepository.find();
-    const activeOrders2 = allOrders2.filter(o => o.status === 'active');
-    const highValueOrders = activeOrders2.filter(o => o.total > 1000);
+    // Extract unique user IDs to avoid redundant queries
+    const uniqueUserIds = [...new Set(highValueOrders.map(o => parseInt(o.userId)))];
     
-    // Trzecie przetwarzanie: dla każdego zamówienia ładuje wszystkich użytkowników
-    const orderSummaries: any[] = [];
-    for (const order of highValueOrders) {
-      // Dla KAŻDEGO zamówienia ładuje WSZYSTKICH użytkowników
-      const allUsers = await this.userRepository.find();
-      const user = allUsers.find(u => u.id === parseInt(order.userId));
-      
-      orderSummaries.push({
-        id: order.id,
-        total: order.total,
-        userName: user ? user.name : 'Unknown',
-      });
-    }
+    // Single query to fetch all required users
+    const users = await this.userRepository
+      .createQueryBuilder('user')
+      .whereInIds(uniqueUserIds)
+      .getMany();
+    
+    // Create user lookup map for O(1) access
+    const userMap = new Map(users.map(u => [u.id, u]));
+    
+    // Build summaries using cached user data
+    const orderSummaries = highValueOrders.map(order => ({
+      id: order.id,
+      total: order.total,
+      userName: userMap.get(parseInt(order.userId))?.name || 'Unknown',
+    }));
     
     return {
       count: orderSummaries.length,
